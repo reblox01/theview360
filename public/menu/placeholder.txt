@@ -1,0 +1,11 @@
+Please replace these placeholder images with real high-quality photos:
+
+1. salmon.jpg - A beautifully plated pan-seared salmon with vegetables
+2. risotto.jpg - A creamy truffle risotto with mushrooms
+3. souffle.jpg - A chocolate soufflé with vanilla ice cream
+
+Recommended image specifications:
+- Resolution: 800x600px minimum
+- Format: JPG
+- File size: Under 500KB
+- Aspect ratio: 4:3 or 16:9 
