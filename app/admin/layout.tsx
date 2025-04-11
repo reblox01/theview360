@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,12 +14,13 @@ import {
   ChevronRight,
   Menu as MenuIcon,
   Bell,
-  User,
-  LogOut
+  User as UserIcon,
+  LogOut,
+  MoreHorizontal
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { 
   DropdownMenu,
   DropdownMenuContent, 
@@ -28,16 +29,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-
-const DRAWER_WIDTH = 280;
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage
+} from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 const menuItems = [
-  { text: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, path: '/admin' },
-  { text: 'Reservations', icon: <CalendarDays className="h-5 w-5" />, path: '/admin/reservations' },
-  { text: 'Menu Management', icon: <UtensilsCrossed className="h-5 w-5" />, path: '/admin/menu' },
-  { text: 'Content Management', icon: <FileEdit className="h-5 w-5" />, path: '/admin/content' },
-  { text: 'Staff', icon: <Users className="h-5 w-5" />, path: '/admin/staff' },
-  { text: 'Settings', icon: <Settings className="h-5 w-5" />, path: '/admin/settings' },
+  { text: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" />, path: '/admin', badge: null },
+  { text: 'Reservations', icon: <CalendarDays className="h-5 w-5" />, path: '/admin/reservations', badge: '12' },
+  { text: 'Menu Management', icon: <UtensilsCrossed className="h-5 w-5" />, path: '/admin/menu', badge: null },
+  { text: 'Content Management', icon: <FileEdit className="h-5 w-5" />, path: '/admin/content', badge: null },
+  { text: 'Staff', icon: <Users className="h-5 w-5" />, path: '/admin/staff', badge: null },
+  { text: 'Settings', icon: <Settings className="h-5 w-5" />, path: '/admin/settings', badge: null },
 ];
 
 type AdminLayoutProps = {
@@ -49,68 +56,111 @@ const AdminLayout = ({ children, showHeader = true }: AdminLayoutProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
+  useEffect(() => {
+    // Close mobile menu when route changes
+    setMobileOpen(false);
+  }, [pathname]);
+
+  const renderNavigationItems = () => (
+    <>
+      {menuItems.map((item) => {
+        const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
+        
+        return (
+          <Button
+            key={item.text}
+            variant={isActive ? "default" : "ghost"}
+            className={`w-full justify-start h-10 mb-1 rounded-md relative group ${isActive ? '' : 'hover:bg-muted/60'}`}
+            asChild
+          >
+            <Link href={item.path}>
+              <div className="flex items-center w-full">
+                <div className={`${isActive ? 'text-white' : 'text-muted-foreground group-hover:text-foreground'} transition-colors mr-3`}>
+                  {item.icon}
+                </div>
+                <span className={`${isActive ? 'font-medium' : ''}`}>{item.text}</span>
+                {item.badge && (
+                  <Badge variant="secondary" className="ml-auto mr-1 bg-primary/10 hover:bg-primary/20 text-primary text-xs">
+                    {item.badge}
+                  </Badge>
+                )}
+                {isActive && (
+                  <ChevronRight className="ml-auto h-4 w-4" />
+                )}
+              </div>
+              {isActive && (
+                <motion.div 
+                  layoutId="activeIndicator" 
+                  className="absolute left-0 top-0 bottom-0 w-1 bg-primary rounded-full my-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              )}
+            </Link>
+          </Button>
+        );
+      })}
+    </>
+  );
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="flex h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex flex-col w-[280px] border-r border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-950 overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-blue-600 bg-clip-text text-transparent">
-            The View 360
-          </h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Administration</p>
+      <aside className="hidden md:flex flex-col w-[280px] border-r border-border/40 shadow-sm bg-card overflow-hidden">
+        <div className="p-6 border-b border-border/40 flex items-center">
+          <div className="bg-primary/10 rounded-md p-2 mr-3">
+            <LayoutDashboard className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">
+              The View 360
+            </h1>
+            <p className="text-xs text-muted-foreground">Admin Portal</p>
+          </div>
         </div>
         
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
-            
-            return (
-              <Link 
-                key={item.text} 
-                href={item.path}
-              >
-                <div
-                  className={`
-                    flex items-center px-4 py-3 text-sm rounded-lg mb-1 group
-                    transition-all duration-200 ease-in-out relative
-                    ${isActive 
-                      ? 'text-white font-medium' 
-                      : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                    }
-                  `}
-                >
-                  {isActive && (
-                    <motion.div 
-                      layoutId="sidebar-highlight"
-                      className="absolute inset-0 bg-gradient-to-r from-blue-600 to-violet-600 rounded-lg -z-10"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                    />
-                  )}
-                  <span className="mr-3">
-                    {item.icon}
-                  </span>
-                  <span>{item.text}</span>
-                  {isActive && (
-                    <ChevronRight className="ml-auto h-4 w-4" />
-                  )}
-                </div>
-              </Link>
-            );
-          })}
-        </nav>
+        <ScrollArea className="flex-1 p-4">
+          {renderNavigationItems()}
+        </ScrollArea>
         
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-violet-600 flex items-center justify-center text-white text-sm font-medium">
-              AD
+        <div className="p-4 border-t border-border/40 mt-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Avatar>
+                <AvatarImage src="/admin-avatar.png" alt="Admin User" />
+                <AvatarFallback className="bg-primary/20 text-primary">AD</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-sm font-medium">Admin User</p>
+                <p className="text-xs text-muted-foreground">admin@theview360.com</p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium dark:text-white">Admin User</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">admin@theview360.com</p>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </aside>
@@ -118,54 +168,38 @@ const AdminLayout = ({ children, showHeader = true }: AdminLayoutProps) => {
       {/* Mobile drawer */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent side="left" className="p-0 w-[280px]">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-800">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-700 to-blue-600 bg-clip-text text-transparent">
-              The View 360
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Administration</p>
-          </div>
-          
-          <nav className="flex-1 p-4 space-y-1">
-            {menuItems.map((item) => {
-              const isActive = pathname === item.path || pathname.startsWith(`${item.path}/`);
-              
-              return (
-                <Link 
-                  key={item.text} 
-                  href={item.path}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  <div
-                    className={`
-                      flex items-center px-4 py-3 text-sm rounded-lg mb-1
-                      transition-all duration-200 ease-in-out
-                      ${isActive 
-                        ? 'bg-gradient-to-r from-blue-600 to-violet-600 text-white font-medium' 
-                        : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }
-                    `}
-                  >
-                    <span className="mr-3">
-                      {item.icon}
-                    </span>
-                    <span>{item.text}</span>
-                    {isActive && (
-                      <ChevronRight className="ml-auto h-4 w-4" />
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
-          </nav>
-          
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-violet-600 flex items-center justify-center text-white text-sm font-medium">
-                AD
+          <div className="flex flex-col h-full">
+            <div className="p-6 border-b border-border/40 flex items-center">
+              <div className="bg-primary/10 rounded-md p-2 mr-3">
+                <LayoutDashboard className="h-5 w-5 text-primary" />
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium dark:text-white">Admin User</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">admin@theview360.com</p>
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">
+                  The View 360
+                </h1>
+                <p className="text-xs text-muted-foreground">Admin Portal</p>
+              </div>
+            </div>
+            
+            <ScrollArea className="flex-1 p-4">
+              {renderNavigationItems()}
+            </ScrollArea>
+            
+            <div className="p-4 border-t border-border/40 mt-auto">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar>
+                    <AvatarImage src="/admin-avatar.png" alt="Admin User" />
+                    <AvatarFallback className="bg-primary/20 text-primary">AD</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">Admin User</p>
+                    <p className="text-xs text-muted-foreground">admin@theview360.com</p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>
@@ -175,7 +209,7 @@ const AdminLayout = ({ children, showHeader = true }: AdminLayoutProps) => {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {showHeader && (
-          <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 shadow-sm z-10">
+          <header className="h-16 border-b border-border/40 bg-card shadow-sm z-10">
             <div className="flex items-center justify-between h-full px-4">
               <div className="flex items-center">
                 <Button 
@@ -188,22 +222,25 @@ const AdminLayout = ({ children, showHeader = true }: AdminLayoutProps) => {
                 </Button>
               </div>
               
-              <div className="flex items-center space-x-3">
-                <Button variant="ghost" size="icon">
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" className="relative">
                   <Bell className="h-5 w-5" />
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary"></span>
                 </Button>
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
-                      <User className="h-5 w-5" />
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>AD</AvatarFallback>
+                      </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem>
-                      <User className="mr-2 h-4 w-4" />
+                      <UserIcon className="mr-2 h-4 w-4" />
                       <span>Profile</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem>
@@ -211,7 +248,7 @@ const AdminLayout = ({ children, showHeader = true }: AdminLayoutProps) => {
                       <span>Settings</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>
+                    <DropdownMenuItem className="text-destructive focus:text-destructive">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Logout</span>
                     </DropdownMenuItem>

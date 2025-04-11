@@ -15,14 +15,17 @@ import {
   Clock,
   Calendar,
   Info,
-  CheckCircle
+  CheckCircle,
+  ExternalLink
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { getDashboardStats } from '@/lib/db';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Mock data for charts
 const reservationsData = [
@@ -93,41 +96,37 @@ export default function AdminDashboard() {
       title: "Today's Reservations",
       value: loading ? '...' : String(stats.todayReservations),
       change: '+12%',
-      icon: <CalendarRange className="h-4 w-4 text-blue-500" />,
+      icon: <CalendarRange className="h-5 w-5 text-blue-600" />,
       path: '/admin/reservations',
-      color: 'bg-blue-50 dark:bg-blue-950',
-      iconColor: 'text-blue-500',
-      borderColor: 'border-blue-100 dark:border-blue-900',
+      color: 'bg-blue-100',
+      iconColor: 'text-blue-600',
     },
     {
       title: 'Upcoming Reservations',
       value: loading ? '...' : String(stats.upcomingReservations),
       change: '+8%',
-      icon: <Calendar className="h-4 w-4 text-purple-500" />,
+      icon: <Calendar className="h-5 w-5 text-violet-600" />,
       path: '/admin/reservations',
-      color: 'bg-purple-50 dark:bg-purple-950',
-      iconColor: 'text-purple-500',
-      borderColor: 'border-purple-100 dark:border-purple-900',
+      color: 'bg-violet-100',
+      iconColor: 'text-violet-600',
     },
     {
       title: 'Menu Items',
       value: loading ? '...' : String(stats.activeMenuItems),
       change: '+3%',
-      icon: <UtensilsCrossed className="h-4 w-4 text-amber-500" />,
+      icon: <UtensilsCrossed className="h-5 w-5 text-amber-600" />,
       path: '/admin/menu',
-      color: 'bg-amber-50 dark:bg-amber-950',
-      iconColor: 'text-amber-500',
-      borderColor: 'border-amber-100 dark:border-amber-900',
+      color: 'bg-amber-100',
+      iconColor: 'text-amber-600',
     },
     {
       title: 'Staff Members',
       value: loading ? '...' : String(stats.staffCount),
       change: '0%',
-      icon: <Users className="h-4 w-4 text-indigo-500" />,
+      icon: <Users className="h-5 w-5 text-emerald-600" />,
       path: '/admin/staff',
-      color: 'bg-indigo-50 dark:bg-indigo-950',
-      iconColor: 'text-indigo-500',
-      borderColor: 'border-indigo-100 dark:border-indigo-900',
+      color: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
     },
   ];
   
@@ -186,86 +185,85 @@ export default function AdminDashboard() {
     <div className="h-full space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
+          <h1 className="text-3xl font-bold tracking-tight">
             Dashboard
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {today}
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 space-x-2">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/admin/reports">
-              <BarChart4 className="mr-2 h-4 w-4" />
-              Reports
-            </Link>
+        <div className="mt-4 sm:mt-0 flex items-center gap-3">
+          <Button variant="outline" size="sm" className="h-9 gap-1 px-3">
+            <BarChart4 className="h-4 w-4" />
+            <span>Reports</span>
           </Button>
-          <Button size="sm" asChild>
-            <Link href="/admin/reservations/new">
-              <Plus className="mr-2 h-4 w-4" />
-              New Reservation
-            </Link>
+          <Button size="sm" className="h-9 gap-1 px-4">
+            <Plus className="h-4 w-4" />
+            <span>New Reservation</span>
           </Button>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-muted/40 p-1">
+          <TabsTrigger value="overview" className="rounded-md px-5">Overview</TabsTrigger>
+          <TabsTrigger value="analytics" className="rounded-md px-5">Analytics</TabsTrigger>
+          <TabsTrigger value="reports" className="rounded-md px-5">Reports</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview" className="space-y-6 mt-6">
           <motion.div 
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
             variants={container}
             initial="hidden"
             animate="show"
           >
-            {statsItems.map((stat, i) => (
+            {statsItems.map((stat) => (
               <motion.div key={stat.title} variants={item}>
-                <Card className={`overflow-hidden border ${stat.borderColor}`}>
-                  <CardHeader className="p-4 pb-0">
+                <Card className="overflow-hidden border-border/40 hover:border-border/80 transition-colors">
+                  <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                       <div className={`p-2 rounded-full ${stat.color}`}>
                         {stat.icon}
                       </div>
-                      <div className="text-xs font-medium flex items-center text-emerald-600">
+                      <Badge variant="outline" className={`text-xs font-medium ${stat.iconColor}`}>
                         {stat.change}
                         <ArrowUpRight className="ml-1 h-3 w-3" />
-                      </div>
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 pt-2">
-                    <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground mt-1">{stat.title}</p>
-                    <div className="mt-4">
-                      <Button 
-                        variant="link" 
-                        className="p-0 h-auto text-xs font-medium"
-                        onClick={() => router.push(stat.path)}
-                      >
-                        View details
-                      </Button>
+                  <CardContent className="pb-2">
+                    <div className="text-3xl font-bold">
+                      {loading ? <Skeleton className="h-8 w-16" /> : stat.value}
                     </div>
+                    <p className="text-xs text-muted-foreground mt-1">{stat.title}</p>
                   </CardContent>
+                  <CardFooter className="pt-0">
+                    <Button 
+                      variant="ghost" 
+                      className={`p-0 h-auto text-xs font-medium hover:${stat.iconColor} text-muted-foreground`}
+                      onClick={() => router.push(stat.path)}
+                    >
+                      View details
+                      <ExternalLink className="ml-1 h-3 w-3" />
+                    </Button>
+                  </CardFooter>
                 </Card>
               </motion.div>
             ))}
           </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
-            <Card className="col-span-1 lg:col-span-5">
-              <CardHeader className="pb-3">
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+            <Card className="col-span-1 lg:col-span-5 border-border/40 hover:border-border/80 transition-colors">
+              <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle>Reservation Trends</CardTitle>
                     <CardDescription>Monthly reservation volume</CardDescription>
                   </div>
-                  <div className="flex items-center text-sm text-emerald-600 font-medium">
+                  <Badge variant="outline" className="text-xs">
                     +12.5% <ArrowUpRight className="ml-1 h-3 w-3" />
-                  </div>
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -284,41 +282,37 @@ export default function AdminDashboard() {
                         fontSize={12}
                       />
                       <Tooltip 
-                        cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                        cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '0.5rem', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
                         formatter={(value: number) => [`${value}`, 'Reservations']}
                       />
                       <Bar 
                         dataKey="total" 
-                        fill="url(#colorGradient)" 
+                        fill="hsl(var(--primary))" 
                         radius={[4, 4, 0, 0]}
+                        opacity={0.8}
                       />
-                      <defs>
-                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#4f46e5" />
-                          <stop offset="100%" stopColor="#818cf8" />
-                        </linearGradient>
-                      </defs>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
               </CardContent>
             </Card>
             
-            <Card className="col-span-1 lg:col-span-2">
+            <Card className="col-span-1 lg:col-span-2 border-border/40 hover:border-border/80 transition-colors">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>Latest updates and actions</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {activities.map((activity) => (
                     <div key={activity.id} className="flex">
-                      <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                      <div className="mr-4 flex h-9 w-9 items-center justify-center rounded-full bg-muted">
                         {activity.icon}
                       </div>
                       <div className="flex flex-col gap-1">
                         <p className="text-sm font-medium">{activity.text}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
                       </div>
                     </div>
                   ))}
@@ -328,9 +322,9 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
         
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <Card className="col-span-1 lg:col-span-2">
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="col-span-1 lg:col-span-2 border-border/40 hover:border-border/80 transition-colors">
               <CardHeader>
                 <CardTitle>Daily Reservation Trends</CardTitle>
                 <CardDescription>Number of reservations by day of week</CardDescription>
@@ -350,14 +344,16 @@ export default function AdminDashboard() {
                         axisLine={false}
                         fontSize={12}
                       />
-                      <Tooltip />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '0.5rem', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}
+                      />
                       <Line 
                         type="monotone" 
                         dataKey="total" 
-                        stroke="#8884d8" 
+                        stroke="hsl(var(--primary))" 
                         strokeWidth={2}
-                        dot={{ r: 4 }}
-                        activeDot={{ r: 6 }}
+                        dot={{ r: 4, fill: 'hsl(var(--card))', strokeWidth: 2 }}
+                        activeDot={{ r: 6, fill: 'hsl(var(--primary))', strokeWidth: 0 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -365,21 +361,21 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="border-border/40 hover:border-border/80 transition-colors">
               <CardHeader>
                 <CardTitle>Reservation Stats</CardTitle>
                 <CardDescription>Key performance indicators</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="mr-2 p-2 rounded-full bg-blue-50 dark:bg-blue-900">
-                        <Calendar className="h-4 w-4 text-blue-500" />
+                      <div className="mr-3 p-2 rounded-full bg-blue-100 dark:bg-blue-900/40">
+                        <Calendar className="h-5 w-5 text-blue-500" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">Total Reservations</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
+                        <p className="text-xs text-muted-foreground">This month</p>
                       </div>
                     </div>
                     <div className="text-xl font-bold">185</div>
@@ -387,12 +383,12 @@ export default function AdminDashboard() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="mr-2 p-2 rounded-full bg-amber-50 dark:bg-amber-900">
-                        <CheckCircle className="h-4 w-4 text-amber-500" />
+                      <div className="mr-3 p-2 rounded-full bg-amber-100 dark:bg-amber-900/40">
+                        <CheckCircle className="h-5 w-5 text-amber-500" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">Completion Rate</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Reservations fulfilled</p>
+                        <p className="text-xs text-muted-foreground">Reservations fulfilled</p>
                       </div>
                     </div>
                     <div className="text-xl font-bold">92%</div>
@@ -400,12 +396,12 @@ export default function AdminDashboard() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <div className="mr-2 p-2 rounded-full bg-emerald-50 dark:bg-emerald-900">
-                        <Users className="h-4 w-4 text-emerald-500" />
+                      <div className="mr-3 p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/40">
+                        <Users className="h-5 w-5 text-emerald-500" />
                       </div>
                       <div>
                         <p className="text-sm font-medium">Average Party Size</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Per reservation</p>
+                        <p className="text-xs text-muted-foreground">Per reservation</p>
                       </div>
                     </div>
                     <div className="text-xl font-bold">3.7</div>
@@ -416,44 +412,44 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
         
-        <TabsContent value="reports" className="space-y-4">
-          <Card>
+        <TabsContent value="reports" className="space-y-6">
+          <Card className="border-border/40 hover:border-border/80 transition-colors">
             <CardHeader>
               <CardTitle>Available Reports</CardTitle>
               <CardDescription>Access detailed analytics</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between border-border/40 hover:border-border/80 bg-transparent hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-medium">Reservation Summary</p>
-                    <p className="text-xs text-gray-500 mt-1">Overview of all reservations</p>
+                    <p className="text-xs text-muted-foreground mt-1">Overview of all reservations</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 
-                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between border-border/40 hover:border-border/80 bg-transparent hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-medium">Table Utilization</p>
-                    <p className="text-xs text-gray-500 mt-1">Analysis of table booking frequency</p>
+                    <p className="text-xs text-muted-foreground mt-1">Analysis of table booking frequency</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 
-                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between border-border/40 hover:border-border/80 bg-transparent hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-medium">Staff Performance</p>
-                    <p className="text-xs text-gray-500 mt-1">Efficiency metrics for team members</p>
+                    <p className="text-xs text-muted-foreground mt-1">Efficiency metrics for team members</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 
-                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between border-border/40 hover:border-border/80 bg-transparent hover:bg-muted/50 transition-colors">
                   <div>
                     <p className="font-medium">Peak Hours Analysis</p>
-                    <p className="text-xs text-gray-500 mt-1">Busiest times for reservations</p>
+                    <p className="text-xs text-muted-foreground mt-1">Busiest times for reservations</p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
             </CardContent>
