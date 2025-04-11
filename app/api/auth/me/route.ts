@@ -1,41 +1,56 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verify } from 'jsonwebtoken';
 
-// Secret key for JWT - in production, use an environment variable
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
-
-export async function GET() {
+export async function GET(request: Request) {
+  console.log('[API] /auth/me called');
   try {
     const cookieStore = cookies();
     const token = cookieStore.get('auth_token')?.value;
 
+    console.log('[API] Auth token exists:', !!token);
+
     if (!token) {
+      console.log('[API] No auth token found in cookies');
       return NextResponse.json(
         { error: 'Not authenticated' },
         { status: 401 }
       );
     }
 
-    // Verify and decode the token
-    const decoded = verify(token, JWT_SECRET) as {
-      id: number;
-      username: string;
-      name: string;
-      role: string;
-    };
+    // Decode the base64 token
+    try {
+      const tokenData = JSON.parse(Buffer.from(token, 'base64').toString());
+      console.log('[API] Token decoded successfully');
+      
+      // Check if token is expired
+      if (tokenData.exp && tokenData.exp < Date.now()) {
+        console.log('[API] Token is expired');
+        return NextResponse.json(
+          { error: 'Token expired' },
+          { status: 401 }
+        );
+      }
 
-    // Return user data without sensitive information
-    return NextResponse.json({
-      user: {
-        id: decoded.id,
-        username: decoded.username,
-        name: decoded.name,
-        role: decoded.role,
-      },
-    });
+      console.log('[API] Auth successful, returning user data');
+      
+      // Return user data
+      return NextResponse.json({
+        user: {
+          id: tokenData.id,
+          username: tokenData.username,
+          name: tokenData.name,
+          role: tokenData.role,
+        },
+      });
+    } catch (parseError) {
+      console.error('[API] Token parsing error:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid authentication token' },
+        { status: 401 }
+      );
+    }
   } catch (error) {
-    console.error('Auth error:', error);
+    console.error('[API] Auth error:', error);
     return NextResponse.json(
       { error: 'Authentication failed' },
       { status: 401 }

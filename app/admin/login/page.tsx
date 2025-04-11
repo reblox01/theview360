@@ -10,12 +10,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+    setDebugInfo('Attempting login...');
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -24,17 +26,38 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ username, password }),
+        credentials: 'include', // Important for cookies
       });
 
+      setDebugInfo(`Login response status: ${response.status}`);
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Login failed');
       }
 
-      // Successful login
-      router.push('/admin');
+      setDebugInfo('Login successful, redirecting...');
+      
+      // Make a quick check to verify auth cookie is set
+      const verifyResponse = await fetch('/api/auth/me', { 
+        credentials: 'include'
+      });
+      
+      if (verifyResponse.ok) {
+        setDebugInfo('Auth verified, redirecting to admin...');
+        // Wait a moment before redirecting to ensure UI updates
+        setTimeout(() => {
+          router.push('/admin');
+        }, 1000);
+      } else {
+        setDebugInfo('Auth verification failed!');
+        setError('Login succeeded but authentication verification failed. Please try again.');
+      }
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+      setDebugInfo('Login error: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setLoading(false);
     }
@@ -85,6 +108,11 @@ export default function LoginPage() {
           </Alert>
         )}
 
+        {/* Always show debug info during development */}
+        <Alert severity="info" sx={{ width: '100%', mb: 2 }}>
+          {debugInfo || 'Enter your credentials to login'}
+        </Alert>
+
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
           <TextField
             margin="normal"
@@ -119,6 +147,9 @@ export default function LoginPage() {
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
+          <Typography variant="caption" color="text.secondary" align="center" display="block">
+            Default credentials: admin / admin123
+          </Typography>
         </Box>
       </Paper>
     </Box>

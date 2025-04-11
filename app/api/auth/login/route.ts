@@ -40,17 +40,8 @@ export async function POST(request: Request) {
       exp: Date.now() + (24 * 60 * 60 * 1000) // 1 day expiration
     })).toString('base64');
 
-    // Set cookie
-    const cookieStore = cookies();
-    cookieStore.set('auth_token', authToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24, // 1 day
-      path: '/',
-    });
-
-    // Return success response without sensitive info
-    return NextResponse.json({
+    // Create the response
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -59,6 +50,19 @@ export async function POST(request: Request) {
         role: user.role,
       },
     });
+
+    // Set cookie directly on the response
+    response.cookies.set({
+      name: 'auth_token',
+      value: authToken,
+      httpOnly: true, 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24, // 1 day
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(

@@ -1,122 +1,466 @@
-import { Box, Grid, Card, CardContent, Typography, Button } from '@mui/material';
-import RestaurantIcon from '@mui/icons-material/Restaurant';
-import EventSeatIcon from '@mui/icons-material/EventSeat';
-import GroupIcon from '@mui/icons-material/Group';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  CalendarRange,
+  UtensilsCrossed,
+  Users,
+  TrendingUp,
+  BarChart4,
+  ArrowUpRight,
+  Plus,
+  Clock,
+  CreditCard,
+  PieChart,
+  Calendar,
+  DollarSign
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { getDashboardStats } from '@/lib/db';
+
+// Mock data for charts
+const revenueData = [
+  { name: 'Jan', total: 1800 },
+  { name: 'Feb', total: 2200 },
+  { name: 'Mar', total: 2800 },
+  { name: 'Apr', total: 2400 },
+  { name: 'May', total: 2900 },
+  { name: 'Jun', total: 3300 },
+  { name: 'Jul', total: 3600 },
+  { name: 'Aug', total: 3200 },
+  { name: 'Sep', total: 3800 },
+  { name: 'Oct', total: 4200 },
+  { name: 'Nov', total: 4100 },
+  { name: 'Dec', total: 4500 },
+];
+
+const reservationsData = [
+  { name: 'Mon', total: 12 },
+  { name: 'Tue', total: 15 },
+  { name: 'Wed', total: 22 },
+  { name: 'Thu', total: 28 },
+  { name: 'Fri', total: 35 },
+  { name: 'Sat', total: 40 },
+  { name: 'Sun', total: 30 },
+];
 
 export default function AdminDashboard() {
-  // Mock data - in a real app, this would come from your API/database
-  const stats = [
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState({
+    todayReservations: 0,
+    activeMenuItems: 0,
+    staffCount: 0,
+    monthlyRevenue: 0
+  });
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    async function fetchDashboardStats() {
+      try {
+        const response = await getDashboardStats();
+        if (response.data) {
+          setStats(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchDashboardStats();
+  }, []);
+  
+  // Today's date for display
+  const today = new Intl.DateTimeFormat('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric'
+  }).format(new Date());
+  
+  // Stats data
+  const statsItems = [
     {
       title: "Today's Reservations",
-      value: '24',
-      icon: <EventSeatIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      link: '/admin/reservations',
+      value: loading ? '...' : String(stats.todayReservations),
+      change: '+12%',
+      icon: <CalendarRange className="h-4 w-4 text-blue-500" />,
+      path: '/admin/reservations',
+      color: 'bg-blue-50 dark:bg-blue-950',
+      iconColor: 'text-blue-500',
+      borderColor: 'border-blue-100 dark:border-blue-900',
     },
     {
       title: 'Active Menu Items',
-      value: '42',
-      icon: <RestaurantIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      link: '/admin/menu',
+      value: loading ? '...' : String(stats.activeMenuItems),
+      change: '+3%',
+      icon: <UtensilsCrossed className="h-4 w-4 text-amber-500" />,
+      path: '/admin/menu',
+      color: 'bg-amber-50 dark:bg-amber-950',
+      iconColor: 'text-amber-500',
+      borderColor: 'border-amber-100 dark:border-amber-900',
     },
     {
       title: 'Staff Members',
-      value: '15',
-      icon: <GroupIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      link: '/admin/staff',
+      value: loading ? '...' : String(stats.staffCount),
+      change: '0%',
+      icon: <Users className="h-4 w-4 text-indigo-500" />,
+      path: '/admin/staff',
+      color: 'bg-indigo-50 dark:bg-indigo-950',
+      iconColor: 'text-indigo-500',
+      borderColor: 'border-indigo-100 dark:border-indigo-900',
     },
     {
       title: 'Monthly Revenue',
-      value: '$45,280',
-      icon: <TrendingUpIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      link: '/admin/reports',
+      value: loading ? '...' : `$${stats.monthlyRevenue.toLocaleString()}`,
+      change: '+8%',
+      icon: <TrendingUp className="h-4 w-4 text-emerald-500" />,
+      path: '/admin/reports',
+      color: 'bg-emerald-50 dark:bg-emerald-950',
+      iconColor: 'text-emerald-500',
+      borderColor: 'border-emerald-100 dark:border-emerald-900',
+    },
+  ];
+  
+  // Activity feed items
+  const activities = [
+    { 
+      id: 1, 
+      text: 'New reservation for Table 5', 
+      time: 'Today at 7:00 PM',
+      icon: <Calendar className="h-4 w-4" />,
+    },
+    { 
+      id: 2, 
+      text: 'Menu item "Grilled Salmon" updated', 
+      time: '2 hours ago',
+      icon: <UtensilsCrossed className="h-4 w-4" />,
+    },
+    { 
+      id: 3, 
+      text: 'New staff member John Doe added', 
+      time: 'Yesterday',
+      icon: <Users className="h-4 w-4" />,
+    },
+    { 
+      id: 4, 
+      text: 'Table 3 reservation cancelled', 
+      time: 'Yesterday',
+      icon: <Clock className="h-4 w-4" />,
+    },
+    { 
+      id: 5, 
+      text: 'Payment processed for Order #3421', 
+      time: '2 days ago',
+      icon: <CreditCard className="h-4 w-4" />,
     },
   ];
 
-  return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard Overview
-      </Typography>
+  // Animation variants
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.1,
+      },
+    },
+  };
 
-      <Grid container spacing={3}>
-        {stats.map((stat) => (
-          <Grid item xs={12} sm={6} md={3} key={stat.title}>
-            <Card>
+  const item = {
+    hidden: { y: 20, opacity: 0 },
+    show: { y: 0, opacity: 1 },
+  };
+
+  return (
+    <div className="h-full space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {today}
+          </p>
+        </div>
+        <div className="mt-4 sm:mt-0 space-x-2">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/admin/reports">
+              <BarChart4 className="mr-2 h-4 w-4" />
+              Reports
+            </Link>
+          </Button>
+          <Button size="sm" asChild>
+            <Link href="/admin/reservations/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Reservation
+            </Link>
+          </Button>
+        </div>
+      </div>
+
+      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="overview" className="space-y-4">
+          <motion.div 
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            {statsItems.map((stat, i) => (
+              <motion.div key={stat.title} variants={item}>
+                <Card className={`overflow-hidden border ${stat.borderColor}`}>
+                  <CardHeader className="p-4 pb-0">
+                    <div className="flex items-center justify-between">
+                      <div className={`p-2 rounded-full ${stat.color}`}>
+                        {stat.icon}
+                      </div>
+                      <div className="text-xs font-medium flex items-center text-emerald-600">
+                        {stat.change}
+                        <ArrowUpRight className="ml-1 h-3 w-3" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-2">
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                    <p className="text-xs text-muted-foreground mt-1">{stat.title}</p>
+                    <div className="mt-4">
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto text-xs font-medium"
+                        onClick={() => router.push(stat.path)}
+                      >
+                        View details
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-7 gap-4">
+            <Card className="col-span-1 lg:col-span-5">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Revenue Overview</CardTitle>
+                    <CardDescription>Monthly revenue for the current year</CardDescription>
+                  </div>
+                  <div className="flex items-center text-sm text-emerald-600 font-medium">
+                    +12.5% <ArrowUpRight className="ml-1 h-3 w-3" />
+                  </div>
+                </div>
+              </CardHeader>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  {stat.icon}
-                  <Typography variant="h6" sx={{ ml: 1 }}>
-                    {stat.title}
-                  </Typography>
-                </Box>
-                <Typography variant="h4" component="div">
-                  {stat.value}
-                </Typography>
+                <div className="h-[250px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueData}>
+                      <XAxis 
+                        dataKey="name" 
+                        tickLine={false} 
+                        axisLine={false}
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        tickFormatter={(value) => `$${value}`}
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={12}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                        formatter={(value: number) => [`$${value}`, 'Revenue']}
+                      />
+                      <Bar 
+                        dataKey="total" 
+                        fill="url(#colorGradient)" 
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <defs>
+                        <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#4f46e5" />
+                          <stop offset="100%" stopColor="#818cf8" />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </CardContent>
             </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Quick Actions
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item>
-            <Button
-              variant="contained"
-              component={Link}
-              href="/admin/reservations/new"
-            >
-              New Reservation
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              component={Link}
-              href="/admin/menu/new"
-            >
-              Add Menu Item
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              component={Link}
-              href="/admin/staff/new"
-            >
-              Add Staff Member
-            </Button>
-          </Grid>
-        </Grid>
-      </Box>
-
-      {/* Recent Activity Section */}
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5" gutterBottom>
-          Recent Activity
-        </Typography>
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary">
-              • New reservation for Table 5 - Today at 7:00 PM
-            </Typography>
-            <Typography color="text.secondary">
-              • Menu item "Grilled Salmon" updated - 2 hours ago
-            </Typography>
-            <Typography color="text.secondary">
-              • New staff member John Doe added - Yesterday
-            </Typography>
-            <Typography color="text.secondary">
-              • Table 3 reservation cancelled - Yesterday
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-    </Box>
+            
+            <Card className="col-span-1 lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+                <CardDescription>Latest updates and actions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {activities.map((activity) => (
+                    <div key={activity.id} className="flex">
+                      <div className="mr-4 flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                        {activity.icon}
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <p className="text-sm font-medium">{activity.text}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="col-span-1 lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Reservation Trends</CardTitle>
+                <CardDescription>Number of reservations by day of week</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={reservationsData}>
+                      <XAxis 
+                        dataKey="name" 
+                        tickLine={false} 
+                        axisLine={false}
+                        fontSize={12}
+                      />
+                      <YAxis 
+                        tickLine={false}
+                        axisLine={false}
+                        fontSize={12}
+                      />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="total" 
+                        stroke="#8884d8" 
+                        strokeWidth={2}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Stats</CardTitle>
+                <CardDescription>Key performance indicators</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="mr-2 p-2 rounded-full bg-blue-50 dark:bg-blue-900">
+                        <Calendar className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Total Reservations</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
+                      </div>
+                    </div>
+                    <div className="text-xl font-bold">342</div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="mr-2 p-2 rounded-full bg-amber-50 dark:bg-amber-900">
+                        <UtensilsCrossed className="h-4 w-4 text-amber-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Most Popular Item</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">By orders</p>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold">Grilled Salmon</div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="mr-2 p-2 rounded-full bg-emerald-50 dark:bg-emerald-900">
+                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">Average Order Value</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Per customer</p>
+                      </div>
+                    </div>
+                    <div className="text-xl font-bold">$48.75</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="reports" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Reports</CardTitle>
+              <CardDescription>Access detailed analytics</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                  <div>
+                    <p className="font-medium">Sales Report</p>
+                    <p className="text-xs text-gray-500 mt-1">Detailed breakdown of sales by category</p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+                
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                  <div>
+                    <p className="font-medium">Reservation Analysis</p>
+                    <p className="text-xs text-gray-500 mt-1">Patterns and trends in customer bookings</p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+                
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                  <div>
+                    <p className="font-medium">Staff Performance</p>
+                    <p className="text-xs text-gray-500 mt-1">Efficiency metrics for team members</p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+                
+                <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
+                  <div>
+                    <p className="font-medium">Inventory Status</p>
+                    <p className="text-xs text-gray-500 mt-1">Current stock levels and usage trends</p>
+                  </div>
+                  <ArrowUpRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 } 
