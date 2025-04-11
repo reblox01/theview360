@@ -22,13 +22,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <ThemeRegistry>
-            <div className="min-h-screen flex flex-col">
-              <Header />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            {children}
           </ThemeRegistry>
         </AuthProvider>
       </body>

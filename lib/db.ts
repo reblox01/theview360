@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { Reservation, MenuItem } from '@prisma/client';
+import type { Reservation, MenuItem } from '@/lib/generated/prisma';
 
 // Reservation methods
 export async function getReservations() {
@@ -229,16 +229,25 @@ export async function getDashboardStats() {
       where: { isActive: true }
     });
     
-    // Calculate monthly revenue (mock data for now)
-    // In a real app, you would sum up order totals for the current month
-    const monthlyRevenue = 45280; // Mock value
+    // Get upcoming reservations count (next 7 days)
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    
+    const upcomingReservations = await prisma.reservation.count({
+      where: {
+        reservationDate: {
+          gte: today,
+          lt: nextWeek
+        }
+      }
+    });
     
     return { 
       data: {
         todayReservations,
         activeMenuItems,
         staffCount,
-        monthlyRevenue
+        upcomingReservations,
       }, 
       error: null 
     };

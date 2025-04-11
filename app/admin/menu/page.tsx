@@ -7,6 +7,16 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import Link from 'next/link';
 import { useMenu } from '@/app/hooks/useMenu';
 import { useState } from 'react';
+import { 
+  Dialog, 
+  DialogTrigger, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Button as ShadcnButton } from '@/components/ui/button';
 
 // Mock data - in a real app, this would come from your API/database
 const menuItems = [
@@ -43,14 +53,23 @@ const categories = ['Starters', 'Main Course', 'Dessert', 'Beverages'];
 export default function MenuManagementPage() {
   const { menuItems: apiMenuItems, loading, error, deleteMenuItem } = useMenu();
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleDelete = async (id: number) => {
     try {
       await deleteMenuItem(id);
       setDeleteError(null);
+      setConfirmOpen(false);
+      setItemToDelete(null);
     } catch (err) {
       setDeleteError('Failed to delete menu item. Please try again.');
     }
+  };
+
+  const openConfirmDialog = (id: number) => {
+    setItemToDelete(id);
+    setConfirmOpen(true);
   };
 
   if (loading) {
@@ -136,13 +155,32 @@ export default function MenuManagementPage() {
                       >
                         <EditIcon />
                       </IconButton>
-                      <IconButton
-                        color="error"
-                        size="small"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <IconButton
+                            color="error"
+                            size="small"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Confirm Deletion</DialogTitle>
+                            <DialogDescription>
+                              Are you sure you want to delete "{item.name}"? This action cannot be undone.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <DialogFooter>
+                            <ShadcnButton variant="outline" onClick={() => {}}>
+                              Cancel
+                            </ShadcnButton>
+                            <ShadcnButton variant="destructive" onClick={() => handleDelete(item.id)}>
+                              Delete
+                            </ShadcnButton>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </CardActions>
                   </Card>
                 </Grid>

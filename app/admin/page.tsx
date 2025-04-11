@@ -13,10 +13,9 @@ import {
   ArrowUpRight,
   Plus,
   Clock,
-  CreditCard,
-  PieChart,
   Calendar,
-  DollarSign
+  Info,
+  CheckCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,21 +25,6 @@ import { Bar, BarChart, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { getDashboardStats } from '@/lib/db';
 
 // Mock data for charts
-const revenueData = [
-  { name: 'Jan', total: 1800 },
-  { name: 'Feb', total: 2200 },
-  { name: 'Mar', total: 2800 },
-  { name: 'Apr', total: 2400 },
-  { name: 'May', total: 2900 },
-  { name: 'Jun', total: 3300 },
-  { name: 'Jul', total: 3600 },
-  { name: 'Aug', total: 3200 },
-  { name: 'Sep', total: 3800 },
-  { name: 'Oct', total: 4200 },
-  { name: 'Nov', total: 4100 },
-  { name: 'Dec', total: 4500 },
-];
-
 const reservationsData = [
   { name: 'Mon', total: 12 },
   { name: 'Tue', total: 15 },
@@ -51,6 +35,22 @@ const reservationsData = [
   { name: 'Sun', total: 30 },
 ];
 
+// Mock data for monthly reservations
+const monthlyReservations = [
+  { name: 'Jan', total: 120 },
+  { name: 'Feb', total: 132 },
+  { name: 'Mar', total: 145 },
+  { name: 'Apr', total: 155 },
+  { name: 'May', total: 190 },
+  { name: 'Jun', total: 210 },
+  { name: 'Jul', total: 250 },
+  { name: 'Aug', total: 265 },
+  { name: 'Sep', total: 220 },
+  { name: 'Oct', total: 185 },
+  { name: 'Nov', total: 195 },
+  { name: 'Dec', total: 250 },
+];
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     todayReservations: 0,
     activeMenuItems: 0,
     staffCount: 0,
-    monthlyRevenue: 0
+    upcomingReservations: 0
   });
   const [loading, setLoading] = useState(true);
   
@@ -100,7 +100,17 @@ export default function AdminDashboard() {
       borderColor: 'border-blue-100 dark:border-blue-900',
     },
     {
-      title: 'Active Menu Items',
+      title: 'Upcoming Reservations',
+      value: loading ? '...' : String(stats.upcomingReservations),
+      change: '+8%',
+      icon: <Calendar className="h-4 w-4 text-purple-500" />,
+      path: '/admin/reservations',
+      color: 'bg-purple-50 dark:bg-purple-950',
+      iconColor: 'text-purple-500',
+      borderColor: 'border-purple-100 dark:border-purple-900',
+    },
+    {
+      title: 'Menu Items',
       value: loading ? '...' : String(stats.activeMenuItems),
       change: '+3%',
       icon: <UtensilsCrossed className="h-4 w-4 text-amber-500" />,
@@ -118,16 +128,6 @@ export default function AdminDashboard() {
       color: 'bg-indigo-50 dark:bg-indigo-950',
       iconColor: 'text-indigo-500',
       borderColor: 'border-indigo-100 dark:border-indigo-900',
-    },
-    {
-      title: 'Monthly Revenue',
-      value: loading ? '...' : `$${stats.monthlyRevenue.toLocaleString()}`,
-      change: '+8%',
-      icon: <TrendingUp className="h-4 w-4 text-emerald-500" />,
-      path: '/admin/reports',
-      color: 'bg-emerald-50 dark:bg-emerald-950',
-      iconColor: 'text-emerald-500',
-      borderColor: 'border-emerald-100 dark:border-emerald-900',
     },
   ];
   
@@ -159,9 +159,9 @@ export default function AdminDashboard() {
     },
     { 
       id: 5, 
-      text: 'Payment processed for Order #3421', 
+      text: 'New special request added to reservation', 
       time: '2 days ago',
-      icon: <CreditCard className="h-4 w-4" />,
+      icon: <Info className="h-4 w-4" />,
     },
   ];
 
@@ -260,8 +260,8 @@ export default function AdminDashboard() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle>Revenue Overview</CardTitle>
-                    <CardDescription>Monthly revenue for the current year</CardDescription>
+                    <CardTitle>Reservation Trends</CardTitle>
+                    <CardDescription>Monthly reservation volume</CardDescription>
                   </div>
                   <div className="flex items-center text-sm text-emerald-600 font-medium">
                     +12.5% <ArrowUpRight className="ml-1 h-3 w-3" />
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="h-[250px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={revenueData}>
+                    <BarChart data={monthlyReservations}>
                       <XAxis 
                         dataKey="name" 
                         tickLine={false} 
@@ -279,14 +279,13 @@ export default function AdminDashboard() {
                         fontSize={12}
                       />
                       <YAxis 
-                        tickFormatter={(value) => `$${value}`}
                         tickLine={false}
                         axisLine={false}
                         fontSize={12}
                       />
                       <Tooltip 
                         cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
-                        formatter={(value: number) => [`$${value}`, 'Revenue']}
+                        formatter={(value: number) => [`${value}`, 'Reservations']}
                       />
                       <Bar 
                         dataKey="total" 
@@ -333,7 +332,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="col-span-1 lg:col-span-2">
               <CardHeader>
-                <CardTitle>Reservation Trends</CardTitle>
+                <CardTitle>Daily Reservation Trends</CardTitle>
                 <CardDescription>Number of reservations by day of week</CardDescription>
               </CardHeader>
               <CardContent>
@@ -368,7 +367,7 @@ export default function AdminDashboard() {
             
             <Card>
               <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
+                <CardTitle>Reservation Stats</CardTitle>
                 <CardDescription>Key performance indicators</CardDescription>
               </CardHeader>
               <CardContent>
@@ -383,33 +382,33 @@ export default function AdminDashboard() {
                         <p className="text-xs text-gray-500 dark:text-gray-400">This month</p>
                       </div>
                     </div>
-                    <div className="text-xl font-bold">342</div>
+                    <div className="text-xl font-bold">185</div>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="mr-2 p-2 rounded-full bg-amber-50 dark:bg-amber-900">
-                        <UtensilsCrossed className="h-4 w-4 text-amber-500" />
+                        <CheckCircle className="h-4 w-4 text-amber-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Most Popular Item</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">By orders</p>
+                        <p className="text-sm font-medium">Completion Rate</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Reservations fulfilled</p>
                       </div>
                     </div>
-                    <div className="text-sm font-bold">Grilled Salmon</div>
+                    <div className="text-xl font-bold">92%</div>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <div className="mr-2 p-2 rounded-full bg-emerald-50 dark:bg-emerald-900">
-                        <DollarSign className="h-4 w-4 text-emerald-500" />
+                        <Users className="h-4 w-4 text-emerald-500" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium">Average Order Value</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Per customer</p>
+                        <p className="text-sm font-medium">Average Party Size</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Per reservation</p>
                       </div>
                     </div>
-                    <div className="text-xl font-bold">$48.75</div>
+                    <div className="text-xl font-bold">3.7</div>
                   </div>
                 </div>
               </CardContent>
@@ -427,16 +426,16 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
                   <div>
-                    <p className="font-medium">Sales Report</p>
-                    <p className="text-xs text-gray-500 mt-1">Detailed breakdown of sales by category</p>
+                    <p className="font-medium">Reservation Summary</p>
+                    <p className="text-xs text-gray-500 mt-1">Overview of all reservations</p>
                   </div>
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>
                 
                 <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
                   <div>
-                    <p className="font-medium">Reservation Analysis</p>
-                    <p className="text-xs text-gray-500 mt-1">Patterns and trends in customer bookings</p>
+                    <p className="font-medium">Table Utilization</p>
+                    <p className="text-xs text-gray-500 mt-1">Analysis of table booking frequency</p>
                   </div>
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>
@@ -451,8 +450,8 @@ export default function AdminDashboard() {
                 
                 <Button variant="outline" className="h-auto flex items-start text-left p-4 justify-between">
                   <div>
-                    <p className="font-medium">Inventory Status</p>
-                    <p className="text-xs text-gray-500 mt-1">Current stock levels and usage trends</p>
+                    <p className="font-medium">Peak Hours Analysis</p>
+                    <p className="text-xs text-gray-500 mt-1">Busiest times for reservations</p>
                   </div>
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>

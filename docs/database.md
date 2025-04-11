@@ -22,11 +22,9 @@ This script will:
 The following models are defined in `prisma/schema.prisma`:
 
 - **User**: Admin users who can access the dashboard
-- **MenuItem**: Restaurant menu items
+- **MenuItem**: Restaurant menu items displayed on the website
 - **Table**: Restaurant tables for reservations
-- **Reservation**: Customer reservations
-- **Order**: Customer orders
-- **OrderItem**: Items within an order
+- **Reservation**: Customer table reservations
 - **Staff**: Restaurant staff members
 
 ## Using the Database in Your Code
